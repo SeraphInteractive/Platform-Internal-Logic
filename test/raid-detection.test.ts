@@ -51,4 +51,19 @@ describe('Raid Detection & Skew Analysis (Batman Protocol)', () => {
     assert.ok(telemetry.flags.includes('COLLAPSED_RANK_ENTROPY'));
     assert.ok(telemetry.flags.includes('ANOMALOUS_VELOCITY_BURST'));
   });
+
+  it('should safely handle zero lower ranks and custom zero epsilon without producing NaN or Infinity', () => {
+    const zeroBreakdown: EntryScoreBreakdown = {
+      entryId: 'zero-lower-ranks',
+      rank1Count: 0,
+      rank2Count: 0,
+      rank3Count: 0,
+      appearanceCount: 0,
+      rawScore: 0,
+    };
+
+    const skew = calculate_skew_ratio(zeroBreakdown, 0);
+    assert.ok(Number.isFinite(skew), `Expected finite skew ratio, got ${skew}`);
+    assert.equal(skew, 1.0);
+  });
 });

@@ -19,12 +19,13 @@ export function calculate_skew_ratio(
   breakdown: EntryScoreBreakdown,
   epsilon: number = DEFAULT_SKEW_EPSILON
 ): number {
+  const safeEps = Math.max(1e-6, Number.isFinite(epsilon) ? epsilon : DEFAULT_SKEW_EPSILON);
   const rank1Points = breakdown.rank1Count * RANK_WEIGHTS[1];
   const lowerRankPoints =
     breakdown.rank2Count * RANK_WEIGHTS[2] +
     breakdown.rank3Count * RANK_WEIGHTS[3];
 
-  return (rank1Points + epsilon) / (lowerRankPoints + epsilon);
+  return (rank1Points + safeEps) / (lowerRankPoints + safeEps);
 }
 
 export const calculateSkewRatio = calculate_skew_ratio;
