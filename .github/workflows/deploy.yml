@@ -1,0 +1,67 @@
+name: Auto Deploy Internal Logic Engine
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Run Unit Tests & Build Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Test Suite
+        run: npm test
+
+      - name: Typecheck & Build
+        run: npm run build
+
+  deploy:
+    name: Deploy to Google Cloud VM & Rebuild API
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VM via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          port: ${{ secrets.VM_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            echo "=================================================="
+            echo "🚀 Updating Platform Internal Logic Engine..."
+            echo "=================================================="
+
+            REPO_PATH="$HOME/Documents/vote-internals"
+            DEPLOY_PATH="${{ secrets.VM_DEPLOY_PATH || '$HOME/Documents/MCS-deployment' }}"
+
+            if [ -d "$REPO_PATH" ]; then
+              echo "Pulling latest code in $REPO_PATH..."
+              cd "$REPO_PATH"
+              git pull origin main
+              npm ci
+              npm run build
+            fi
+
+            if [ -d "$DEPLOY_PATH" ]; then
+              echo "Rebuilding API container with updated internal logic..."
+              cd "$DEPLOY_PATH"
+              docker compose build --build-arg CACHEBUST=$(date +%s) api
+              docker compose up -d --no-deps api
+            fi
+
+            echo "✅ Internal Logic Engine updated and API container rebuilt."
