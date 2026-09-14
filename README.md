@@ -6,20 +6,31 @@ Mathematical and statistical calculation engine for ranked ballot voting systems
 
 ## Installation
 
-Add the dependency to `package.json`:
+The package is installed straight from this repository, pinned to a release tag:
+
+```bash
+npm install git+https://github.com/SeraphInteractive/Platform-Internal-Logic.git#v1.0.0
+```
+
+which records in `package.json`:
 
 ```json
 {
   "dependencies": {
-    "@platform/internal-logic": "github:SeraphInteractive/Platform-Internal-Logic#main"
+    "@platform/internal-logic": "git+https://github.com/SeraphInteractive/Platform-Internal-Logic.git#v1.0.0"
   }
 }
 ```
 
-Or install via npm:
-```bash
-npm install github:SeraphInteractive/Platform-Internal-Logic
-```
+npm clones the tag, runs the `prepare` script (`tsc`) and installs only `dist/`, so consumers
+need `git` on the PATH but no build step of their own. The lockfile pins the exact commit.
+
+### Releasing
+
+1. Bump `version` in `package.json` and merge to `main` (CI runs typecheck, tests and a
+   trial install of the package from git).
+2. Tag and push: `git tag v1.1.0 && git push origin v1.1.0`.
+3. In consumers, bump the `#v…` ref and run `npm install`.
 
 ---
 

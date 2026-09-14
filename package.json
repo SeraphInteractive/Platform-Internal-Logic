@@ -2,14 +2,24 @@
   "name": "@platform/internal-logic",
   "version": "1.0.0",
   "description": "Mathematical and statistical calculation engine for ranked ballot voting systems",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
   "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "test": "tsx --test test/*.test.ts",
     "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepare": "npm run build"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SeraphInteractive/Platform-Internal-Logic.git"
   },
   "keywords": [
     "voting",

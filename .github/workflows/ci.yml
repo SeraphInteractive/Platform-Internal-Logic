@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Typecheck, test & verify package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # the trial install below clones this checkout; npm needs a full (non-shallow) history for that
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # `prepare` runs the build here, exactly as it does when consumers install the git dependency
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+      # Consumers (Platform-API) install this package straight from git; make sure that
+      # path works end-to-end: clone at this commit, run `prepare`, pack only `files`.
+      - name: Verify git install from this commit
+        run: |
+          consumer="$(mktemp -d)"
+          cd "$consumer"
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund "git+file://${GITHUB_WORKSPACE}#$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD)"
+          test -f node_modules/@platform/internal-logic/dist/index.js
+          test -f node_modules/@platform/internal-logic/dist/index.d.ts
+          test ! -e node_modules/@platform/internal-logic/src
+          node --input-type=module -e "import('@platform/internal-logic').then((m) => { if (typeof m.validate_ballot !== 'function') { throw new Error('validate_ballot export missing') } })"
